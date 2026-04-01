@@ -106,7 +106,7 @@
                         </thead>
                         <tbody>
                             {% for rec in records %}
-                            {% set today = datetime.date.today() %}
+                            {% set today = today %}
                             {% set safe = datetime.datetime.strptime(rec['safe_date'], '%Y-%m-%d').date() %}
                             <tr>
                                 <td><strong>{{ rec['animal_id'] }}</strong></td>
