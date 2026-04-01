@@ -51,7 +51,8 @@ def index():
                          role=session.get('role'),
                          vet_kvb=session.get('vet_kvb'),
                          drugs=DRUG_DATA,
-                         records=records)
+                         records=records,
+                         datetime=datetime)
 
 
 @app.route("/signup", methods=["GET", "POST"])
