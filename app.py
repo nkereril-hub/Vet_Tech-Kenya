@@ -52,7 +52,7 @@ def index():
                          vet_kvb=session.get('vet_kvb'),
                          drugs=DRUG_DATA,
                          records=records,
-                         datetime=datetime)
+                         today=datetime.date.today())
 
 
 @app.route("/signup", methods=["GET", "POST"])
