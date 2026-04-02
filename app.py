@@ -7,10 +7,13 @@ app.secret_key = "vettech_secret_key_2026"
 
 DB_FILE = "vettech_data.db"
 
-# Withdrawal periods (Days)
+# Updated DRUG_DATA with separate milk and meat periods
 DRUG_DATA = {
-    "tetracycline": 7, "penicillin": 5, "ivermectin": 21,
-    "albendazole": 14, "penistrep": 30 
+    'tetracycline': {'meat': 28, 'milk': 7},
+    'penicillin': {'meat': 14, 'milk': 3}, # 72 hours approx 3 days
+    'ivermectin': {'meat': 35, 'milk': 0}, # Note: Often not used in milking cows
+    'albendazole': {'meat': 14, 'milk': 3},
+    'penistrep': {'meat': 23, 'milk': 3}  # 60-72 hours
 }
 
 def get_db_connection():
