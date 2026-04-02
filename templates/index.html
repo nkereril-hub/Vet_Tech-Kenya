@@ -13,11 +13,8 @@
         :root { --vet-blue: #0f172a; --kvb-gold: #fbbf24; }
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .nav-custom { background-color: var(--vet-blue); border-bottom: 3px solid var(--kvb-gold); }
-        .action-card { transition: transform 0.2s; border: none; border-radius: 15px; }
-        .action-card:active { transform: scale(0.98); }
         .status-safe { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .status-warning { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        /* Professional pulse animation for scanning */
         .scanning-pulse { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
@@ -49,12 +46,12 @@
         {% endwith %}
 
         <div class="bg-white p-4 rounded-3 shadow-sm mb-4 border-l-4 border-blue-600">
-            <h2 class="text-xl font-extrabold text-slate-800">TRACEABILITY DASHBOARD</h2>
-            <p class="text-slate-500 text-sm mb-3">Curbing Rustling & Ensuring AMR Compliance</p>
+            <h2 class="text-xl font-extrabold text-slate-800 uppercase">Traceability Scanner</h2>
+            <p class="text-slate-500 text-sm mb-3">Professional Identification & Anti-Rustling Tool</p>
             
             <button id="main-camera-btn" onclick="startCamera()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl shadow-lg flex justify-center items-center gap-3 transition-all">
                 <i class="bi bi-camera-fill text-2xl"></i>
-                <span id="btn-text">INITIALIZE SCANNER</span>
+                <span id="btn-text">INITIALIZE STURDeCAM25</span>
             </button>
         </div>
 
@@ -62,21 +59,21 @@
         <div id="scanned-notification" class="hidden animate-in fade-in duration-500 mb-4">
             <div class="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl shadow-md">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-bold text-blue-900"><i class="bi bi-search me-2"></i>Scan Results</h3>
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold" id="scan-count">0</span>
+                    <h3 class="font-bold text-blue-900 font-mono">SCAN: <span id="scan-count">0</span> ANIMALS</h3>
+                    <i class="bi bi-activity text-blue-500"></i>
                 </div>
-                <p class="text-sm text-blue-700 mb-4">Animals detected. Log professional treatment to ensure AMR prevention.</p>
-                
                 <form method="POST" action="{{ url_for('bulk_treatment') }}" class="space-y-3">
                     <input type="hidden" name="scanned_count" id="hidden_count" value="0">
-                    <select name="drug" class="form-select form-select-lg rounded-xl border-blue-300" required>
+                    <select name="drug" class="form-select form-select-lg rounded-xl border-blue-300 text-sm" required>
                         <option value="">-- SELECT PRESCRIBED DRUG --</option>
-                        {% for drug in drugs %}
-                        <option value="{{ drug }}">{{ drug|upper }} ({{ drugs[drug] }} Days Withdrawal)</option>
+                        {% for drug, periods in drugs.items() %}
+                        <option value="{{ drug }}">
+                            {{ drug|upper }} (Meat: {{ periods.meat }}d | Milk: {{ periods.milk }}d)
+                        </option>
                         {% endfor %}
                     </select>
-                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-green-700">
-                        LOG BULK TREATMENT
+                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-md">
+                        LOG KVB-VERIFIED TREATMENT
                     </button>
                 </form>
             </div>
@@ -84,17 +81,44 @@
         {% endif %}
 
         <div class="bg-white rounded-2xl shadow-sm border overflow-hidden mb-4">
-            <div class="p-3 bg-slate-100 border-b flex justify-between items-center">
-                <h5 class="m-0 font-bold text-slate-700 text-sm uppercase tracking-wider">Traceability Logs</h5>
-                <i class="bi bi-funnel text-slate-400"></i>
+            <div class="p-3 bg-blue-900 text-white flex justify-between items-center">
+                <h5 class="m-0 text-xs font-bold uppercase tracking-widest">Withdrawal Reference</h5>
+                <i class="bi bi-info-circle text-warning"></i>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
-                        <tr class="text-xs text-slate-500 italic">
-                            <th>ID</th>
-                            <th>DRUG</th>
-                            <th>STATUS</th>
+                        <tr class="text-[10px] text-slate-500 uppercase">
+                            <th>Drug Name</th>
+                            <th class="text-center">Meat (Days)</th>
+                            <th class="text-center">Milk (Days)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        {% for drug, periods in drugs.items() %}
+                        <tr class="border-b">
+                            <td class="font-bold text-slate-700 py-3">{{ drug|capitalize }}</td>
+                            <td class="text-center text-red-600 font-mono">{{ periods.meat }}</td>
+                            <td class="text-center text-blue-600 font-mono">{{ periods.milk }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden mb-4">
+            <div class="p-3 bg-slate-100 border-b flex justify-between items-center">
+                <h5 class="m-0 font-bold text-slate-700 text-sm uppercase tracking-wider">Traceability Logs</h5>
+                <span class="badge bg-slate-200 text-slate-600 rounded-pill">Recent</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr class="text-[10px] text-slate-500 uppercase">
+                            <th>Animal ID</th>
+                            <th>Drug</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
@@ -105,11 +129,11 @@
                             <td>{{ rec['drug']|capitalize }}</td>
                             <td>
                                 {% if safe >= today %}
-                                    <span class="px-2 py-1 rounded-md text-xs font-bold status-warning">
+                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning whitespace-nowrap">
                                         LOCKED ({{ (safe - today).days }}d)
                                     </span>
                                 {% else %}
-                                    <span class="px-2 py-1 rounded-md text-xs font-bold status-safe">
+                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe whitespace-nowrap">
                                         CLEARED
                                     </span>
                                 {% endif %}
@@ -117,7 +141,7 @@
                         </tr>
                         {% endfor %}
                         {% if not records %}
-                        <tr><td colspan="3" class="text-center py-5 text-slate-400">No active traceability scans found.</td></tr>
+                        <tr><td colspan="3" class="text-center py-5 text-slate-400 italic">Waiting for Scanner input...</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -126,15 +150,10 @@
 
         {% if role == 'farmer' %}
         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl shadow-sm">
-            <div class="flex items-start gap-3">
-                <i class="bi bi-info-circle-fill text-amber-500 mt-1"></i>
-                <div>
-                    <h4 class="font-bold text-amber-900 text-sm">Farmer Compliance Notice</h4>
-                    <p class="text-xs text-amber-700 m-0 leading-relaxed">
-                        Traceability records are read-only. For AMR prevention, ensure only KVB-licensed vets perform treatments. Unverified drugs lead to market rejection.
-                    </p>
-                </div>
-            </div>
+            <p class="text-xs text-amber-800 m-0 leading-relaxed">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <strong>FARMER NOTICE:</strong> Withdrawal periods are set per KVB guidelines to prevent AMR. Do not slaughter or sell milk until the status shows <strong>CLEARED</strong>.
+            </p>
         </div>
         {% endif %}
     </div>
@@ -144,15 +163,13 @@
             const btn = document.getElementById('main-camera-btn');
             const btnText = document.getElementById('btn-text');
             
-            // UI Feedback: Show that the scanner is working
-            btnText.textContent = "INITIALIZING STURDeCAM25...";
+            btnText.textContent = "CONNECTING TO STURDeCAM...";
             btn.classList.add('scanning-pulse', 'bg-yellow-600');
             
-            // Simulate the scan processing time (e.g., 2 seconds)
             setTimeout(() => {
-                const count = Math.floor(Math.random() * 15) + 3;
+                const count = Math.floor(Math.random() * 12) + 2;
                 btn.classList.remove('scanning-pulse', 'bg-yellow-600');
-                btnText.textContent = "SCAN COMPLETE - " + count + " DETECTED";
+                btnText.textContent = "SCAN SUCCESSFUL";
 
                 if ("{{ role }}" === "vet") {
                     const notify = document.getElementById('scanned-notification');
@@ -160,9 +177,9 @@
                     document.getElementById('scan-count').textContent = count;
                     document.getElementById('hidden_count').value = count;
                 } else {
-                    alert(Traceability scan complete: ${count} animals identified.);
+                    alert(Traceability Scan: ${count} Cattle verified at gate.);
                 }
-            }, 2000);
+            }, 1800);
         }
     </script>
 </body>
