@@ -89,16 +89,16 @@
                     <thead class="table-light">
                         <tr class="text-[10px] text-slate-500 uppercase">
                             <th class="text-start ps-4">Drug Name</th>
-                            <th>Meat</th>
-                            <th>Milk</th>
+                            <th>Meat Withdrawal</th>
+                            <th>Milk Withdrawal</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
                         {% for drug, periods in drugs.items() %}
                         <tr class="border-b">
                             <td class="text-start ps-4 font-bold text-slate-700 py-3">{{ drug|capitalize }}</td>
-                            <td class="font-mono text-red-600 font-bold">{{ periods.meat }}</td>
-                            <td class="font-mono text-blue-600 font-bold">{{ periods.milk }}</td>
+                            <td class="font-mono text-red-600 font-bold">{{ periods.meat }} Days</td>
+                            <td class="font-mono text-blue-600 font-bold">{{ periods.milk }} Days</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -116,23 +116,39 @@
                         <tr>
                             <th class="ps-4">Animal ID</th>
                             <th>Drug</th>
-                            <th>Status</th>
+                            <th>Meat Status</th>
+                            <th>Milk Status</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
                         {% for rec in records %}
-                        {% set safe = datetime.datetime.strptime(rec['safe_date'], '%Y-%m-%d').date() %}
-                        <tr class="border-b">
-                            <td class="ps-4 font-mono font-bold text-blue-800 py-3">{{ rec['animal_id'] }}</td>
-                            <td>{{ rec['drug']|capitalize }}</td>
-                            <td>
-                                {% if safe >= today %}
-                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">LOCKED</span>
-                                {% else %}
-                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">CLEARED</span>
-                                {% endif %}
-                            </td>
-                        </tr>
+                            {% set drug_key = rec['drug'] %}
+                            {% set periods = drugs[drug_key] %}
+                            
+                            {% set treat_date = datetime.datetime.strptime(rec['treatment_date'], '%Y-%m-%d').date() %}
+                            {% set safe_meat = treat_date + datetime.timedelta(days=periods.meat) %}
+                            {% set safe_milk = treat_date + datetime.timedelta(days=periods.milk) %}
+                            
+                            <tr class="border-b">
+                                <td class="ps-4 font-mono font-bold text-blue-800 py-3">{{ rec['animal_id'] }}</td>
+                                <td>{{ rec['drug']|capitalize }}</td>
+                                
+                                <td>
+                                    {% if safe_meat >= today %}
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">LOCKED ({{ safe_meat }})</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">CLEARED</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if safe_milk >= today %}
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">LOCKED ({{ safe_milk }})</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">CLEARED</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
