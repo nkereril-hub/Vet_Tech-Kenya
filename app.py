@@ -55,6 +55,7 @@ def index():
                          vet_kvb=session.get('vet_kvb'),
                          drugs=DRUG_DATA,
                          records=records,
+                         datetime=datetime,  # CRITICAL: Added so HTML can do logic
                          today=datetime.date.today())
 
 
@@ -121,7 +122,10 @@ def treatment():
         flash("❌ Invalid animal or drug.", "warning")
         return redirect(url_for("index"))
 
-    safe_date = datetime.date.today() + datetime.timedelta(days=DRUG_DATA[drug_input])
+    # FIX: Extracting 'meat' days specifically for the database math
+    safe_days = DRUG_DATA[drug_input]['meat']
+    safe_date = datetime.date.today() + datetime.timedelta(days=safe_days)
+    
     with get_db_connection() as conn:
         conn.execute("REPLACE INTO records VALUES (?, ?, ?, ?, ?, ?, ?)", 
                      (animal_id, "Cattle", drug_input, str(datetime.date.today()), 
@@ -146,7 +150,9 @@ def bulk_treatment():
         flash("❌ Invalid request.", "warning")
         return redirect(url_for("index"))
 
-    safe_date = datetime.date.today() + datetime.timedelta(days=DRUG_DATA[drug_input])
+    # FIX: Using 'meat' as the standard safe period for bulk entries
+    safe_days = DRUG_DATA[drug_input]['meat']
+    safe_date = datetime.date.today() + datetime.timedelta(days=safe_days)
     today = str(datetime.date.today())
 
     # For demo: We simulate treating "SCANNED-001" to "SCANNED-XXX"
