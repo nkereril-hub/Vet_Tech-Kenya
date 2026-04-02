@@ -60,7 +60,6 @@
             <div class="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl shadow-md">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="font-bold text-blue-900 font-mono">SCAN: <span id="scan-count">0</span> ANIMALS</h3>
-                    <i class="bi bi-activity text-blue-500"></i>
                 </div>
                 <form method="POST" action="{{ url_for('bulk_treatment') }}" class="space-y-3">
                     <input type="hidden" name="scanned_count" id="hidden_count" value="0">
@@ -82,24 +81,24 @@
 
         <div class="bg-white rounded-2xl shadow-sm border overflow-hidden mb-4">
             <div class="p-3 bg-blue-900 text-white flex justify-between items-center">
-                <h5 class="m-0 text-xs font-bold uppercase tracking-widest">Withdrawal Reference</h5>
+                <h5 class="m-0 text-xs font-bold uppercase tracking-widest">Withdrawal Reference (Days)</h5>
                 <i class="bi bi-info-circle text-warning"></i>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
+                <table class="table table-hover mb-0 align-middle text-center">
                     <thead class="table-light">
                         <tr class="text-[10px] text-slate-500 uppercase">
-                            <th>Drug Name</th>
-                            <th class="text-center">Meat (Days)</th>
-                            <th class="text-center">Milk (Days)</th>
+                            <th class="text-start ps-4">Drug Name</th>
+                            <th>Meat</th>
+                            <th>Milk</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
                         {% for drug, periods in drugs.items() %}
                         <tr class="border-b">
-                            <td class="font-bold text-slate-700 py-3">{{ drug|capitalize }}</td>
-                            <td class="text-center text-red-600 font-mono">{{ periods.meat }}</td>
-                            <td class="text-center text-blue-600 font-mono">{{ periods.milk }}</td>
+                            <td class="text-start ps-4 font-bold text-slate-700 py-3">{{ drug|capitalize }}</td>
+                            <td class="font-mono text-red-600 font-bold">{{ periods.meat }}</td>
+                            <td class="font-mono text-blue-600 font-bold">{{ periods.milk }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -110,13 +109,12 @@
         <div class="bg-white rounded-2xl shadow-sm border overflow-hidden mb-4">
             <div class="p-3 bg-slate-100 border-b flex justify-between items-center">
                 <h5 class="m-0 font-bold text-slate-700 text-sm uppercase tracking-wider">Traceability Logs</h5>
-                <span class="badge bg-slate-200 text-slate-600 rounded-pill">Recent</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr class="text-[10px] text-slate-500 uppercase">
-                            <th>Animal ID</th>
+                    <thead class="table-light text-[10px] uppercase text-slate-500">
+                        <tr>
+                            <th class="ps-4">Animal ID</th>
                             <th>Drug</th>
                             <th>Status</th>
                         </tr>
@@ -125,61 +123,40 @@
                         {% for rec in records %}
                         {% set safe = datetime.datetime.strptime(rec['safe_date'], '%Y-%m-%d').date() %}
                         <tr class="border-b">
-                            <td class="font-mono font-bold text-blue-800 py-3">{{ rec['animal_id'] }}</td>
+                            <td class="ps-4 font-mono font-bold text-blue-800 py-3">{{ rec['animal_id'] }}</td>
                             <td>{{ rec['drug']|capitalize }}</td>
                             <td>
                                 {% if safe >= today %}
-                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning whitespace-nowrap">
-                                        LOCKED ({{ (safe - today).days }}d)
-                                    </span>
+                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">LOCKED</span>
                                 {% else %}
-                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe whitespace-nowrap">
-                                        CLEARED
-                                    </span>
+                                    <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">CLEARED</span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
-                        {% if not records %}
-                        <tr><td colspan="3" class="text-center py-5 text-slate-400 italic">Waiting for Scanner input...</td></tr>
-                        {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
-
-        {% if role == 'farmer' %}
-        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl shadow-sm">
-            <p class="text-xs text-amber-800 m-0 leading-relaxed">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                <strong>FARMER NOTICE:</strong> Withdrawal periods are set per KVB guidelines to prevent AMR. Do not slaughter or sell milk until the status shows <strong>CLEARED</strong>.
-            </p>
-        </div>
-        {% endif %}
     </div>
 
     <script>
         function startCamera() {
             const btn = document.getElementById('main-camera-btn');
             const btnText = document.getElementById('btn-text');
-            
-            btnText.textContent = "CONNECTING TO STURDeCAM...";
+            btnText.textContent = "INITIALIZING STURDeCAM...";
             btn.classList.add('scanning-pulse', 'bg-yellow-600');
             
             setTimeout(() => {
                 const count = Math.floor(Math.random() * 12) + 2;
                 btn.classList.remove('scanning-pulse', 'bg-yellow-600');
                 btnText.textContent = "SCAN SUCCESSFUL";
-
                 if ("{{ role }}" === "vet") {
-                    const notify = document.getElementById('scanned-notification');
-                    notify.classList.remove('hidden');
+                    document.getElementById('scanned-notification').classList.remove('hidden');
                     document.getElementById('scan-count').textContent = count;
                     document.getElementById('hidden_count').value = count;
-                } else {
-                    alert(Traceability Scan: ${count} Cattle verified at gate.);
                 }
-            }, 1800);
+            }, 1500);
         }
     </script>
 </body>
