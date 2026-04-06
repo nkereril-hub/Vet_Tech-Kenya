@@ -122,30 +122,34 @@
                     </thead>
                     <tbody class="text-sm">
                         {% for rec in records %}
-                            {% set drug_key = rec['drug'] %}
-                            {% set periods = drugs[drug_key] %}
-                            
-                            {% set treat_date = datetime.datetime.strptime(rec['treatment_date'], '%Y-%m-%d').date() %}
-                            {% set safe_meat = treat_date + datetime.timedelta(days=periods.meat) %}
-                            {% set safe_milk = treat_date + datetime.timedelta(days=periods.milk) %}
+                            {% set meat_date = datetime.datetime.strptime(rec['meat_safe_date'], '%Y-%m-%d').date() %}
+                            {% set milk_date = datetime.datetime.strptime(rec['milk_safe_date'], '%Y-%m-%d').date() %}
                             
                             <tr class="border-b">
                                 <td class="ps-4 font-mono font-bold text-blue-800 py-3">{{ rec['animal_id'] }}</td>
                                 <td>{{ rec['drug']|capitalize }}</td>
                                 
                                 <td>
-                                    {% if safe_meat >= today %}
-                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">LOCKED ({{ safe_meat }})</span>
+                                    {% if today >= meat_date %}
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">
+                                            <i class="bi bi-check-circle-fill"></i> CLEARED
+                                        </span>
                                     {% else %}
-                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">CLEARED</span>
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">
+                                            LOCKED ({{ (meat_date - today).days }}d)
+                                        </span>
                                     {% endif %}
                                 </td>
 
                                 <td>
-                                    {% if safe_milk >= today %}
-                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">LOCKED ({{ safe_milk }})</span>
+                                    {% if today >= milk_date %}
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">
+                                            <i class="bi bi-check-circle-fill"></i> CLEARED
+                                        </span>
                                     {% else %}
-                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-safe">CLEARED</span>
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-bold status-warning">
+                                            LOCKED ({{ (milk_date - today).days }}d)
+                                        </span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -167,8 +171,11 @@
                 const count = Math.floor(Math.random() * 12) + 2;
                 btn.classList.remove('scanning-pulse', 'bg-yellow-600');
                 btnText.textContent = "SCAN SUCCESSFUL";
-                if ("{{ role }}" === "vet") {
-                    document.getElementById('scanned-notification').classList.remove('hidden');
+                
+                // Show notification for vets
+                const notification = document.getElementById('scanned-notification');
+                if (notification && "{{ role }}" === "vet") {
+                    notification.classList.remove('hidden');
                     document.getElementById('scan-count').textContent = count;
                     document.getElementById('hidden_count').value = count;
                 }
