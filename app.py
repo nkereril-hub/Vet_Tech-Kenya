@@ -10,10 +10,10 @@ DB_FILE = "vettech_data.db"
 # Updated DRUG_DATA with separate milk and meat periods
 DRUG_DATA = {
     'tetracycline': {'meat': 28, 'milk': 7},
-    'penicillin': {'meat': 14, 'milk': 3}, # 72 hours approx 3 days
-    'ivermectin': {'meat': 35, 'milk': 0}, # Note: Often not used in milking cows
+    'penicillin': {'meat': 14, 'milk': 3}, 
+    'ivermectin': {'meat': 35, 'milk': 0}, 
     'albendazole': {'meat': 14, 'milk': 3},
-    'penistrep': {'meat': 23, 'milk': 3}  # 60-72 hours
+    'penistrep': {'meat': 23, 'milk': 3}  
 }
 
 def get_db_connection():
@@ -25,9 +25,13 @@ def init_db():
     with get_db_connection() as conn:
         conn.execute('''CREATE TABLE IF NOT EXISTS users 
                         (username TEXT PRIMARY KEY, password TEXT, role TEXT, kvb_number TEXT, name TEXT)''')
+        
+        # TABLE UPDATED: milk_safe_date and meat_safe_date are now separate
         conn.execute('''CREATE TABLE IF NOT EXISTS records 
                         (animal_id TEXT PRIMARY KEY, species TEXT, drug TEXT, 
-                         treatment_date TEXT, safe_date TEXT, farmer_phone TEXT, vet_kvb TEXT)''')
+                         treatment_date TEXT, milk_safe_date TEXT, meat_safe_date TEXT, 
+                         farmer_phone TEXT, vet_kvb TEXT)''')
+        
         conn.execute('''CREATE TABLE IF NOT EXISTS system_flags 
                         (flag_name TEXT PRIMARY KEY, status TEXT)''')
         conn.execute("INSERT OR IGNORE INTO system_flags VALUES ('rover_command', 'IDLE')")
@@ -42,7 +46,6 @@ def index():
     if 'username' not in session:
         return redirect(url_for("login"))
     
-    # Get recent scanned/treatment records for display
     with get_db_connection() as conn:
         records = conn.execute("""
             SELECT * FROM records 
@@ -55,7 +58,7 @@ def index():
                          vet_kvb=session.get('vet_kvb'),
                          drugs=DRUG_DATA,
                          records=records,
-                         datetime=datetime,  # CRITICAL: Added so HTML can do logic
+                         datetime=datetime,
                          today=datetime.date.today())
 
 
@@ -122,21 +125,24 @@ def treatment():
         flash("❌ Invalid animal or drug.", "warning")
         return redirect(url_for("index"))
 
-    # FIX: Extracting 'meat' days specifically for the database math
-    safe_days = DRUG_DATA[drug_input]['meat']
-    safe_date = datetime.date.today() + datetime.timedelta(days=safe_days)
+    today = datetime.date.today()
+    meat_days = DRUG_DATA[drug_input]['meat']
+    milk_days = DRUG_DATA[drug_input]['milk']
+    
+    meat_safe_date = today + datetime.timedelta(days=meat_days)
+    milk_safe_date = today + datetime.timedelta(days=milk_days)
     
     with get_db_connection() as conn:
-        conn.execute("REPLACE INTO records VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                     (animal_id, "Cattle", drug_input, str(datetime.date.today()), 
-                      str(safe_date), "0700000", session['vet_kvb']))
+        # REPLACE INTO now handles 8 columns total
+        conn.execute("REPLACE INTO records VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+                     (animal_id, "Cattle", drug_input, str(today), 
+                      str(milk_safe_date), str(meat_safe_date), "0700000", session['vet_kvb']))
         conn.commit()
     
-    flash(f"✅ {animal_id} treated with {drug_input}. Safe on {safe_date}.", "success")
+    flash(f"✅ {animal_id} treated. Milk Safe: {milk_safe_date} | Meat Safe: {meat_safe_date}", "success")
     return redirect(url_for("index"))
 
 
-# New: Bulk treatment for all scanned animals
 @app.route("/bulk_treatment", methods=["POST"])
 def bulk_treatment():
     if session.get('role') != 'vet':
@@ -150,21 +156,20 @@ def bulk_treatment():
         flash("❌ Invalid request.", "warning")
         return redirect(url_for("index"))
 
-    # FIX: Using 'meat' as the standard safe period for bulk entries
-    safe_days = DRUG_DATA[drug_input]['meat']
-    safe_date = datetime.date.today() + datetime.timedelta(days=safe_days)
-    today = str(datetime.date.today())
+    today = datetime.date.today()
+    meat_safe_date = str(today + datetime.timedelta(days=DRUG_DATA[drug_input]['meat']))
+    milk_safe_date = str(today + datetime.timedelta(days=DRUG_DATA[drug_input]['milk']))
+    today_str = str(today)
 
-    # For demo: We simulate treating "SCANNED-001" to "SCANNED-XXX"
     with get_db_connection() as conn:
         for i in range(1, scanned_count + 1):
             animal_id = f"SCANNED-{i:03d}"
-            conn.execute("REPLACE INTO records VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                         (animal_id, "Cattle", drug_input, today, 
-                          str(safe_date), "0700000", session['vet_kvb']))
+            conn.execute("REPLACE INTO records VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+                         (animal_id, "Cattle", drug_input, today_str, 
+                          milk_safe_date, meat_safe_date, "0700000", session['vet_kvb']))
         conn.commit()
 
-    flash(f"✅ Bulk treatment applied to {scanned_count} animals with {drug_input}. Safe on {safe_date}.", "success")
+    flash(f"✅ Bulk treatment applied. Milk: {milk_safe_date}, Meat: {meat_safe_date}", "success")
     return redirect(url_for("index"))
 
 
@@ -175,6 +180,6 @@ def logout():
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
+    # Ensure tables exist before running
+    init_db()
     app.run(debug=True)
